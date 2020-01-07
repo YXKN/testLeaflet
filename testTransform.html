@@ -1,0 +1,60 @@
+<!--
+	作者：zwx
+	时间：2019-12-26
+	描述：使用mapdownloader下载的地图是arcgis格式的，测试转换成x-y-z标准格式
+	需要使用map.getZoom()获取z
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="leaflet.css"></link>
+	</head>
+	<body>
+		<style type="text/css">
+			html,body{
+				height: 100%;
+				width: 100%;
+				padding: 0px;
+			}
+		</style>
+		<div id="testMap" style="width: 90%; height: 90%; background: rgba(0,255,0,0.1);"></div>
+		<script src="leaflet.js"></script>
+		<!--<script src="esri-leaflet.js"></script>-->
+		<!--<script src="esri-leaflet-debug.js"></script>-->
+		<script type="text/javascript">
+			window.onload=function(){
+				L.TileLayer = L.TileLayer.extend({
+
+			        getTileUrl: function (tilePoint) {
+			        	//tilePoint中只有x和y
+			        	//需要使用map.getZoom()获取z
+			            var oo = "00000000"
+			            var xx = tilePoint.x.toString(16);
+			            xx = "C" + oo.substring(0, 8 - xx.length) + xx;
+//			            var yy = (tilePoint.y - Math.pow(2, tilePoint.z - 2)).toString(16);//这里减去偏移值
+						var yy = tilePoint.y.toString(16);
+			            yy = "R" + oo.substring(0, 8 - yy.length) + yy;
+			            return L.Util.template(this._url, L.extend({
+			                s: this._getSubdomain(tilePoint),
+//			                z: "L" + tilePoint.z,
+							z: "L" + myMap.getZoom(),
+			                x: xx,
+			                y: yy
+			            }, this.options));
+			        }
+			    });
+				var myMap=L.map('testMap').setView([45.6127,122.8254],10);
+				
+				
+				var baseLayer=L.tileLayer('_alllayers/{z}/{y}/{x}.png',
+				{
+					minZoom:7,
+					maxZoom:14,
+					attribution:'<b style="color:#dddddd">测试</b>'
+				}).addTo(myMap);
+			};
+		</script>
+	</body>
+</html>

@@ -1,0 +1,148 @@
+<!--
+	作者：zwx
+	时间：2019-12-26
+	描述：简单测试leaflet功能
+	1.添加标签marker
+	2.自定义marker，旋转
+	3.响应点击事件，返回坐标
+	4.移动地图
+	5.弹窗和提示框
+	---------------------------2019-12-30-----------------------------
+	6.显示边缘外的标记
+	7.自动移动marker,更新marker的tooltip
+	---------------------------2020-1-7-------------------------------
+	8.限制边缘
+	9.隐藏leaflet默认的标签
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="leaflet.css"></link>
+	</head>
+	<body>
+		<style type="text/css">
+			html,body{
+				height: 100%;
+				width: 100%;
+				padding: 0px;
+			}
+			.moveButton{
+				height: 20px;
+				width: 20px;
+				position: absolute;
+				margin: 0 auto;
+				background: rgba(0,0,255,0.5);
+				z-index: 10;
+			}
+		</style>
+		<div id="moveMap" class="moveButton"></div>
+		<div id="testMap" style="width: 90%; height: 90%; background: rgba(0,255,0,0.1);z-index: 2;"></div>
+		<script src="leaflet.js"></script>
+		<script src="leaflet.rotatedMarker.js"></script>
+		<script src="Leaflet.EdgeMarker.js"></script>
+		<!--<script src="esri-leaflet.js"></script>-->
+		<!--<script src="esri-leaflet-debug.js"></script>-->
+		<script type="text/javascript">
+			function onMapClick(e) {
+//  			alert("You clicked the map at " + e.latlng);
+				console.log(e.latlng);
+				return e.latlng;
+			}
+			window.onload=function(){
+				
+				//载入div，设置中心和zoom
+				//lat纬度(latitude)，经度lng(longtitude)
+				var myMap=L.map('testMap',{
+//					maxBounds:mapBound,
+				}).setView([45.6127,122.8254],10);
+				//测试移动地图
+				function moveMapToCenter(){
+					console.log("moving map");
+					var target={
+						lat:45.766564985445,
+						lng:122.57995605468749
+					};
+					var panOptions={
+						animate:true,
+					};
+					myMap.panTo(target,panOptions);
+				};
+				document.getElementById('moveMap').onclick=moveMapToCenter;
+				
+				//添加瓦片地图
+				L.tileLayer('NewMapCache/{z}/{y}/{x}.png',
+				{
+					minZoom:7,
+					maxZoom:14,
+					attribution:'<b style="color:#000">测试</b>'
+				}).addTo(myMap);
+				
+				//设置地图范围
+				var mapBound=[[46.98347527163436,121.0035964312488],[43.95663265612993,126.52977304648503]];
+				myMap.setMaxBounds(mapBound);
+				
+				//点击弹出位置
+				var clickLatLng=myMap.on('click', onMapClick);
+				
+				//标记
+//				var marker = L.marker([45.6246, 122.86594]).addTo(myMap); //可以添加相应的option
+				//自定义icon
+				const tankIcon=L.icon({
+					iconUrl:'./icon/tankTri.png',
+					iconSize:[20,20],
+					popupAnchor:[0,-10],
+				})
+				var myMarker=L.marker([45.6246, 122.86594],{icon:tankIcon,rotationAngle: 45,draggable: false}).addTo(myMap);
+				var markerInfo=myMarker.getLatLng();
+				var markerStr='lat='+markerInfo.lat+'<br>lng='+markerInfo.lng;
+				myMarker.bindTooltip(markerStr,{direction:'left',offset:[-15,0]}).openTooltip();
+				
+				//自动移动marker
+				var markerMoveAuto=setInterval(function(){
+					const originLatLng=markerInfo;
+					var tempMark=myMarker.getLatLng();
+					if((tempMark.lat-originLatLng.lat)>0.2){
+						tempMark=originLatLng;
+					}
+					myMarker.setLatLng([tempMark.lat+0.02,tempMark.lng+0.02]);
+					//更新tooltip
+					var markerStr='lat='+tempMark.lat.toFixed(4)+'<br>lng='+tempMark.lng.toFixed(4);
+					myMarker.setTooltipContent(markerStr);
+				},200);
+				
+				//弹窗
+//				marker.bindPopup("<b>Hello world!</b><br>I am a popup.").openPopup();
+
+				//测试edgeMarker，添加一些marker和circle
+				L.circle([45.72054903253111,122.3355316964245],200).addTo(myMap);
+				L.circle([45.77708857669903,123.51520011404077],300).addTo(myMap);
+				L.marker([45.4609554769084,122.0169480791006]).addTo(myMap);
+				L.marker([45.45324913008394,123.99999952850446]).addTo(myMap);
+				
+				// add the EdgeMarker to the map.
+			    var edgeMarkerLayer = L.edgeMarker({
+			      icon: L.icon({ // style markers
+			          iconUrl: 'images/edge-arrow-marker.png',
+			          clickable: true,
+			          iconSize: [48, 48],
+			          iconAnchor: [24, 24]
+			      }),
+			      rotateIcons: true, // rotate EdgeMarkers depending on their relative position
+			      layerGroup: null // you can specify a certain L.layerGroup to create the edge markers from.
+			    }).addTo(myMap);
+			
+			    // if you want to remove the edge markers
+			    // edgeMarkerLayer.destroy();
+			    
+			    //将leaflet默认下标隐藏
+				var bottomTitle=document.getElementsByClassName("leaflet-right");
+//				console.log(bottomTitle);
+				for(let i=0;i<bottomTitle.length;i++){
+					bottomTitle[i].style.display="";
+				}
+			};
+		</script>
+	</body>
+</html>
